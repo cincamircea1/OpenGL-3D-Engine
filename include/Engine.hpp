@@ -3,6 +3,10 @@
 #include <string>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <memory>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include "Cube.hpp"
 
 /**
  * Main engine class for the OpenGL 3D Engine.
@@ -47,6 +51,17 @@ private:
     
     // GLFW window
     GLFWwindow* m_window;
+    
+    // Timing
+    float m_deltaTime;
+    float m_lastFrameTime;
+    
+    // Camera/view properties
+    glm::mat4 m_projection;
+    glm::mat4 m_view;
+    
+    // Scene objects
+    std::unique_ptr<Cube> m_cube;
     
     /**
      * Process input

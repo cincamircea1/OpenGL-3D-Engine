@@ -17,6 +17,8 @@ Engine::Engine(const std::string& title, int width, int height)
     , m_height(height)
     , m_isRunning(false)
     , m_window(nullptr)
+    , m_deltaTime(0.0f)
+    , m_lastFrameTime(0.0f)
 {
 }
 
@@ -65,12 +67,28 @@ bool Engine::initialize()
     
     // Configure OpenGL
     glViewport(0, 0, m_width, m_height);
+    glEnable(GL_DEPTH_TEST);
     
     Logger::getInstance().info("OpenGL Version: " + std::string((const char*)glGetString(GL_VERSION)));
     Logger::getInstance().info("GLSL Version: " + std::string((const char*)glGetString(GL_SHADING_LANGUAGE_VERSION)));
     Logger::getInstance().info("Vendor: " + std::string((const char*)glGetString(GL_VENDOR)));
     Logger::getInstance().info("Renderer: " + std::string((const char*)glGetString(GL_RENDERER)));
     
+    // Set up the projection matrix
+    float aspectRatio = static_cast<float>(m_width) / static_cast<float>(m_height);
+    m_projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
+    
+    // Set up the view matrix - position the camera
+    m_view = glm::lookAt(
+        glm::vec3(0.0f, 0.0f, 3.0f),  // Camera position
+        glm::vec3(0.0f, 0.0f, 0.0f),  // Look at
+        glm::vec3(0.0f, 1.0f, 0.0f)   // Up vector
+    );
+    
+    // Create scene objects
+    m_cube = std::make_unique<Cube>();
+    
+    m_lastFrameTime = static_cast<float>(glfwGetTime());
     m_isRunning = true;
     return true;
 }
@@ -83,15 +101,22 @@ void Engine::processInput() {
 }
 
 void Engine::update() {
-    // Update game state here
+    // Calculate delta time
+    float currentFrame = static_cast<float>(glfwGetTime());
+    m_deltaTime = currentFrame - m_lastFrameTime;
+    m_lastFrameTime = currentFrame;
+    
+    // Update game objects
+    m_cube->update(m_deltaTime);
 }
 
 void Engine::render() {
     // Clear the screen
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    // Render objects here
+    // Render objects
+    m_cube->render(m_projection, m_view);
     
     // Swap buffers
     glfwSwapBuffers(m_window);
@@ -123,6 +148,9 @@ void Engine::shutdown()
 {
     if (m_isRunning) {
         Logger::getInstance().info("Shutting down Engine...");
+        
+        // Clean up resources
+        m_cube.reset();
         
         if (m_window) {
             glfwDestroyWindow(m_window);
