@@ -1,9 +1,10 @@
 #include "../include/Engine.hpp"
+#include "../include/Logger.hpp"
 #include <iostream>
 
 // Static callback function needs to access the Engine instance
 void Engine::errorCallback(int error, const char* description) {
-    std::cerr << "GLFW Error " << error << ": " << description << std::endl;
+    Logger::getInstance().error("GLFW Error " + std::to_string(error) + ": " + description);
 }
 
 void Engine::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
@@ -26,14 +27,14 @@ Engine::~Engine()
 
 bool Engine::initialize()
 {
-    std::cout << "Initializing Engine..." << std::endl;
+    Logger::getInstance().info("Initializing Engine...");
     
     // Set error callback
     glfwSetErrorCallback(errorCallback);
     
     // Initialize GLFW
     if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
+        Logger::getInstance().error("Failed to initialize GLFW");
         return false;
     }
     
@@ -45,7 +46,7 @@ bool Engine::initialize()
     // Create window
     m_window = glfwCreateWindow(m_width, m_height, m_title.c_str(), nullptr, nullptr);
     if (!m_window) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
+        Logger::getInstance().error("Failed to create GLFW window");
         glfwTerminate();
         return false;
     }
@@ -58,17 +59,17 @@ bool Engine::initialize()
     
     // Initialize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
+        Logger::getInstance().error("Failed to initialize GLAD");
         return false;
     }
     
     // Configure OpenGL
     glViewport(0, 0, m_width, m_height);
     
-    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
-    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-    std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
-    std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
+    Logger::getInstance().info("OpenGL Version: " + std::string((const char*)glGetString(GL_VERSION)));
+    Logger::getInstance().info("GLSL Version: " + std::string((const char*)glGetString(GL_SHADING_LANGUAGE_VERSION)));
+    Logger::getInstance().info("Vendor: " + std::string((const char*)glGetString(GL_VENDOR)));
+    Logger::getInstance().info("Renderer: " + std::string((const char*)glGetString(GL_RENDERER)));
     
     m_isRunning = true;
     return true;
@@ -98,7 +99,7 @@ void Engine::render() {
 
 void Engine::run()
 {
-    std::cout << "Engine running..." << std::endl;
+    Logger::getInstance().info("Engine running...");
     
     // Main loop
     while (!glfwWindowShouldClose(m_window)) {
@@ -115,13 +116,13 @@ void Engine::run()
         glfwPollEvents();
     }
     
-    std::cout << "Engine stopped." << std::endl;
+    Logger::getInstance().info("Engine stopped.");
 }
 
 void Engine::shutdown()
 {
     if (m_isRunning) {
-        std::cout << "Shutting down Engine..." << std::endl;
+        Logger::getInstance().info("Shutting down Engine...");
         
         if (m_window) {
             glfwDestroyWindow(m_window);
