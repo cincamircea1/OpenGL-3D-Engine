@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Cube.hpp"
+#include "Camera.hpp"
 
 /**
  * Main engine class for the OpenGL 3D Engine.
@@ -56,9 +57,11 @@ private:
     float m_deltaTime;
     float m_lastFrameTime;
     
-    // Camera/view properties
-    glm::mat4 m_projection;
-    glm::mat4 m_view;
+    // Camera
+    std::unique_ptr<Camera> m_camera;
+    bool m_firstMouse;
+    float m_lastX;
+    float m_lastY;
     
     // Scene objects
     std::unique_ptr<Cube> m_cube;
@@ -87,4 +90,15 @@ private:
      * Window resize callback
      */
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+    
+    /**
+     * Static callback functions for input (since GLFW requires C-style callbacks)
+     */
+    static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
+    static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+    
+    /**
+     * Set up GLFW callbacks
+     */
+    void setupCallbacks();
 }; 

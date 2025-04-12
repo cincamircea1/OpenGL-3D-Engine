@@ -2,6 +2,9 @@
 #include "../include/Logger.hpp"
 #include <iostream>
 
+// Static pointer to the current Engine instance for use in callbacks
+static Engine* currentEngineInstance = nullptr;
+
 // Static callback function needs to access the Engine instance
 void Engine::errorCallback(int error, const char* description) {
     Logger::getInstance().error("GLFW Error " + std::to_string(error) + ": " + description);
@@ -9,6 +12,32 @@ void Engine::errorCallback(int error, const char* description) {
 
 void Engine::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+void Engine::mouseCallback(GLFWwindow* window, double xpos, double ypos) {
+    if (currentEngineInstance) {
+        if (currentEngineInstance->m_firstMouse) {
+            currentEngineInstance->m_lastX = static_cast<float>(xpos);
+            currentEngineInstance->m_lastY = static_cast<float>(ypos);
+            currentEngineInstance->m_firstMouse = false;
+        }
+
+        float xoffset = static_cast<float>(xpos) - currentEngineInstance->m_lastX;
+        float yoffset = currentEngineInstance->m_lastY - static_cast<float>(ypos); // Reversed: y ranges from bottom to top
+
+        currentEngineInstance->m_lastX = static_cast<float>(xpos);
+        currentEngineInstance->m_lastY = static_cast<float>(ypos);
+
+        if (currentEngineInstance->m_camera) {
+            currentEngineInstance->m_camera->ProcessMouseMovement(xoffset, yoffset);
+        }
+    }
+}
+
+void Engine::scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    if (currentEngineInstance && currentEngineInstance->m_camera) {
+        currentEngineInstance->m_camera->ProcessMouseScroll(static_cast<float>(yoffset));
+    }
 }
 
 Engine::Engine(const std::string& title, int width, int height)
@@ -19,12 +48,28 @@ Engine::Engine(const std::string& title, int width, int height)
     , m_window(nullptr)
     , m_deltaTime(0.0f)
     , m_lastFrameTime(0.0f)
+    , m_firstMouse(true)
+    , m_lastX(width / 2.0f)
+    , m_lastY(height / 2.0f)
 {
 }
 
 Engine::~Engine()
 {
     shutdown();
+}
+
+void Engine::setupCallbacks() {
+    // Set this instance as the current one for callbacks
+    currentEngineInstance = this;
+    
+    // Set GLFW callbacks
+    glfwSetFramebufferSizeCallback(m_window, framebufferSizeCallback);
+    glfwSetCursorPosCallback(m_window, mouseCallback);
+    glfwSetScrollCallback(m_window, scrollCallback);
+    
+    // Capture cursor for camera control
+    glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 bool Engine::initialize()
@@ -56,9 +101,6 @@ bool Engine::initialize()
     // Make OpenGL context current
     glfwMakeContextCurrent(m_window);
     
-    // Set callbacks
-    glfwSetFramebufferSizeCallback(m_window, framebufferSizeCallback);
-    
     // Initialize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         Logger::getInstance().error("Failed to initialize GLAD");
@@ -74,19 +116,14 @@ bool Engine::initialize()
     Logger::getInstance().info("Vendor: " + std::string((const char*)glGetString(GL_VENDOR)));
     Logger::getInstance().info("Renderer: " + std::string((const char*)glGetString(GL_RENDERER)));
     
-    // Set up the projection matrix
-    float aspectRatio = static_cast<float>(m_width) / static_cast<float>(m_height);
-    m_projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
-    
-    // Set up the view matrix - position the camera
-    m_view = glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 3.0f),  // Camera position
-        glm::vec3(0.0f, 0.0f, 0.0f),  // Look at
-        glm::vec3(0.0f, 1.0f, 0.0f)   // Up vector
-    );
+    // Initialize camera
+    m_camera = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 5.0f));
     
     // Create scene objects
     m_cube = std::make_unique<Cube>();
+    
+    // Set up callbacks
+    setupCallbacks();
     
     m_lastFrameTime = static_cast<float>(glfwGetTime());
     m_isRunning = true;
@@ -98,6 +135,20 @@ void Engine::processInput() {
     if (glfwGetKey(m_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(m_window, true);
     }
+    
+    // Camera movement with WASD keys and space/ctrl
+    if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS)
+        m_camera->ProcessKeyboard(CameraMovement::FORWARD, m_deltaTime);
+    if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS)
+        m_camera->ProcessKeyboard(CameraMovement::BACKWARD, m_deltaTime);
+    if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS)
+        m_camera->ProcessKeyboard(CameraMovement::LEFT, m_deltaTime);
+    if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS)
+        m_camera->ProcessKeyboard(CameraMovement::RIGHT, m_deltaTime);
+    if (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        m_camera->ProcessKeyboard(CameraMovement::UP, m_deltaTime);
+    if (glfwGetKey(m_window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        m_camera->ProcessKeyboard(CameraMovement::DOWN, m_deltaTime);
 }
 
 void Engine::update() {
@@ -115,8 +166,15 @@ void Engine::render() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    // Calculate projection matrix with camera zoom for FOV
+    float aspectRatio = static_cast<float>(m_width) / static_cast<float>(m_height);
+    glm::mat4 projection = glm::perspective(glm::radians(m_camera->Zoom), aspectRatio, 0.1f, 100.0f);
+    
+    // Get view matrix from camera
+    glm::mat4 view = m_camera->GetViewMatrix();
+    
     // Render objects
-    m_cube->render(m_projection, m_view);
+    m_cube->render(projection, view);
     
     // Swap buffers
     glfwSwapBuffers(m_window);
@@ -151,6 +209,10 @@ void Engine::shutdown()
         
         // Clean up resources
         m_cube.reset();
+        m_camera.reset();
+        
+        // Reset the current engine instance pointer
+        currentEngineInstance = nullptr;
         
         if (m_window) {
             glfwDestroyWindow(m_window);

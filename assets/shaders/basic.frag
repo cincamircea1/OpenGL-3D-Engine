@@ -28,10 +28,10 @@ void main()
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     vec3 specular = specularStrength * spec * lightColor;
     
-    // Calculate gradient color based on position
+    // Calculate gradient color based on position and object color
     vec3 gradientColor = mix(
-        vec3(0.2, 0.4, 0.8), // Blue
-        vec3(0.8, 0.2, 0.4), // Red
+        objectColor * vec3(0.5, 1.0, 1.5), // Bluish tint
+        objectColor,                        // Original color
         TexCoord.y
     );
     
