@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 /**
  * Main engine class for the OpenGL 3D Engine.
@@ -37,10 +39,37 @@ public:
     void shutdown();
 
 private:
+    // Window properties
     std::string m_title;
     int m_width;
     int m_height;
     bool m_isRunning;
-
-    // OpenGL context and window will be added here
+    
+    // GLFW window
+    GLFWwindow* m_window;
+    
+    /**
+     * Process input
+     */
+    void processInput();
+    
+    /**
+     * Render frame
+     */
+    void render();
+    
+    /**
+     * Update frame
+     */
+    void update();
+    
+    /**
+     * Error callback for GLFW
+     */
+    static void errorCallback(int error, const char* description);
+    
+    /**
+     * Window resize callback
+     */
+    static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 }; 
