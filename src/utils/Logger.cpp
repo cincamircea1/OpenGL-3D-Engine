@@ -1,4 +1,4 @@
-#include "utils/Logger.hpp"
+#include "Logger.hpp"
 
 Logger::Logger() : m_logLevel(LogLevel::INFO) {
     // Initialize with default log level

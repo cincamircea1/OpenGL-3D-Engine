@@ -1,5 +1,5 @@
-#include "graphics/Camera.hpp"
-#include "utils/Logger.hpp"
+#include "Camera.hpp"
+#include "../utils/Logger.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)

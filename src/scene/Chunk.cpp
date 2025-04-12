@@ -1,5 +1,5 @@
-#include "scene/Chunk.hpp"
-#include "utils/Logger.hpp"
+#include "Chunk.hpp"
+#include "../utils/Logger.hpp"
 #include <vector>
 #include <cmath>
 #include <random>
@@ -29,7 +29,7 @@ Chunk::~Chunk() {
 void Chunk::generate() {
     // Fill the block array with some pattern
     std::mt19937 rng(static_cast<unsigned int>(
-        static_cast<int>(m_position.x) * 73856093 ^ 
+        static_cast<int>(m_position.x) * 73856093 ^
         static_cast<int>(m_position.y) * 19349663 ^ 
         static_cast<int>(m_position.z) * 83492791));
     

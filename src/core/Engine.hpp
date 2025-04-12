@@ -7,9 +7,9 @@
 #include <vector>
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "scene/Cube.hpp"
-#include "scene/Chunk.hpp"
-#include "graphics/Camera.hpp"
+#include "../scene/Cube.hpp"
+#include "../scene/Chunk.hpp"
+#include "../graphics/Camera.hpp"
 
 /**
  * Main engine class for the OpenGL 3D Engine.
@@ -71,7 +71,7 @@ private:
     
     // World generation
     void generateWorld();
-    constexpr static int WORLD_SIZE_X = 2; // chunks in X direction
+    constexpr static int WORLD_SIZE_X = 1; // chunks in X direction
     constexpr static int WORLD_SIZE_Y = 1; // chunks in Y direction
     constexpr static int WORLD_SIZE_Z = 1; // chunks in Z direction
     

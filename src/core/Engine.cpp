@@ -1,5 +1,5 @@
-#include "core/Engine.hpp"
-#include "utils/Logger.hpp"
+#include "Engine.hpp"
+#include "../utils/Logger.hpp"
 #include <iostream>
 
 // Static pointer to the current Engine instance for use in callbacks

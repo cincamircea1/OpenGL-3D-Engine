@@ -1,7 +1,7 @@
 #pragma once
 
-#include "graphics/Mesh.hpp"
-#include "graphics/Shader.hpp"
+#include "../graphics/Mesh.hpp"
+#include "../graphics/Shader.hpp"
 #include <memory>
 #include <vector>
 #include <array>
