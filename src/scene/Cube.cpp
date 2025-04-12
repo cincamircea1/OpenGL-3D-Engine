@@ -1,5 +1,5 @@
-#include "../include/Cube.hpp"
-#include "../include/Logger.hpp"
+#include "scene/Cube.hpp"
+#include "utils/Logger.hpp"
 #include <vector>
 
 Cube::Cube()

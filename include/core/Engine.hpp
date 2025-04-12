@@ -1,13 +1,13 @@
 #pragma once
 
 #include <string>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
 #include <memory>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include "Cube.hpp"
-#include "Camera.hpp"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "scene/Cube.hpp"
+#include "graphics/Camera.hpp"
 
 /**
  * Main engine class for the OpenGL 3D Engine.

@@ -1,6 +1,6 @@
-#include "../include/Camera.hpp"
-#include "../include/Logger.hpp"
-#include <glm/gtc/matrix_transform.hpp>
+#include "graphics/Camera.hpp"
+#include "utils/Logger.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
     : Front(glm::vec3(0.0f, 0.0f, -1.0f))

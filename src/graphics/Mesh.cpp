@@ -1,5 +1,5 @@
-#include "../include/Mesh.hpp"
-#include "../include/Logger.hpp"
+#include "graphics/Mesh.hpp"
+#include "utils/Logger.hpp"
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices)
     : vertices(vertices), indices(indices)
