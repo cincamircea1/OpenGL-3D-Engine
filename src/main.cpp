@@ -6,10 +6,10 @@ int main() {
     try {
         // Set log level for development (more verbose)
         Logger::getInstance().setLogLevel(Logger::LogLevel::DEBUG);
-        Logger::getInstance().info("Starting OpenGL 3D Engine with rotating cube...");
+        Logger::getInstance().info("Starting OpenGL 3D Engine with voxel world...");
         
         // Create and initialize the engine
-        Engine engine("OpenGL 3D Engine - Rotating Cube", 1280, 720);
+        Engine engine("OpenGL 3D Engine - Voxel World", 1280, 720);
         
         if (!engine.initialize()) {
             Logger::getInstance().error("Failed to initialize engine!");

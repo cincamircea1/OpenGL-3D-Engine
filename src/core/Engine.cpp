@@ -110,17 +110,20 @@ bool Engine::initialize()
     // Configure OpenGL
     glViewport(0, 0, m_width, m_height);
     glEnable(GL_DEPTH_TEST);
-    
+
     Logger::getInstance().info("OpenGL Version: " + std::string((const char*)glGetString(GL_VERSION)));
     Logger::getInstance().info("GLSL Version: " + std::string((const char*)glGetString(GL_SHADING_LANGUAGE_VERSION)));
     Logger::getInstance().info("Vendor: " + std::string((const char*)glGetString(GL_VENDOR)));
     Logger::getInstance().info("Renderer: " + std::string((const char*)glGetString(GL_RENDERER)));
     
-    // Initialize camera
-    m_camera = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 5.0f));
+    // Initialize camera with a good position to see a single chunk
+    m_camera = std::make_unique<Camera>(
+        glm::vec3(CHUNK_SIZE * 0.5f, CHUNK_SIZE * 0.5f, CHUNK_SIZE * 1.5f), 
+        glm::vec3(0.0f, 1.0f, 0.0f), 
+        -15.0f, 0.0f);
     
-    // Create scene objects
-    m_cube = std::make_unique<Cube>();
+    // Generate the voxel world
+    generateWorld();
     
     // Set up callbacks
     setupCallbacks();
@@ -130,10 +133,46 @@ bool Engine::initialize()
     return true;
 }
 
+void Engine::generateWorld() {
+    Logger::getInstance().info("Generating world with " + 
+        std::to_string(WORLD_SIZE_X) + "x" + 
+        std::to_string(WORLD_SIZE_Y) + "x" + 
+        std::to_string(WORLD_SIZE_Z) + " chunks...");
+    
+    // Calculate total number of cubes in the world
+    int totalBlocks = WORLD_SIZE_X * WORLD_SIZE_Y * WORLD_SIZE_Z * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
+    Logger::getInstance().info("World will have up to " + std::to_string(totalBlocks) + " potential blocks");
+    
+    // Generate chunks in a 3D grid
+    for (int x = 0; x < WORLD_SIZE_X; x++) {
+        for (int y = 0; y < WORLD_SIZE_Y; y++) {
+            for (int z = 0; z < WORLD_SIZE_Z; z++) {
+                // Calculate chunk position (each chunk is CHUNK_SIZE x CHUNK_SIZE x CHUNK_SIZE blocks)
+                glm::vec3 chunkPosition(
+                    x * CHUNK_SIZE, 
+                    y * CHUNK_SIZE, 
+                    z * CHUNK_SIZE
+                );
+                
+                // Create and add chunk
+                m_chunks.push_back(std::make_unique<Chunk>(chunkPosition));
+            }
+        }
+    }
+    
+    Logger::getInstance().info("World generation complete with " + std::to_string(m_chunks.size()) + " chunks");
+}
+
 void Engine::processInput() {
     // Exit on escape key
     if (glfwGetKey(m_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(m_window, true);
+    }
+    
+    // Increase movement speed for better navigation in a larger world
+    m_camera->MovementSpeed = 10.0f;
+    if (glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        m_camera->MovementSpeed = 30.0f; // Sprint speed
     }
     
     // Camera movement with WASD keys and space/ctrl
@@ -157,24 +196,35 @@ void Engine::update() {
     m_deltaTime = currentFrame - m_lastFrameTime;
     m_lastFrameTime = currentFrame;
     
-    // Update game objects
-    m_cube->update(m_deltaTime);
+    // Update title with FPS counter
+    if (m_deltaTime > 0.0f) {
+        float fps = 1.0f / m_deltaTime;
+        std::string title = m_title + " | FPS: " + std::to_string(static_cast<int>(fps));
+        glfwSetWindowTitle(m_window, title.c_str());
+    }
+    
+    // Update chunks
+    for (auto& chunk : m_chunks) {
+        chunk->update(m_deltaTime);
+    }
 }
 
 void Engine::render() {
     // Clear the screen
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.4f, 0.6f, 0.9f, 1.0f); // Sky blue color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // Calculate projection matrix with camera zoom for FOV
     float aspectRatio = static_cast<float>(m_width) / static_cast<float>(m_height);
-    glm::mat4 projection = glm::perspective(glm::radians(m_camera->Zoom), aspectRatio, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(m_camera->Zoom), aspectRatio, 0.1f, 1000.0f);
     
     // Get view matrix from camera
     glm::mat4 view = m_camera->GetViewMatrix();
     
-    // Render objects
-    m_cube->render(projection, view);
+    // Render all chunks
+    for (auto& chunk : m_chunks) {
+        chunk->render(projection, view);
+    }
     
     // Swap buffers
     glfwSwapBuffers(m_window);
@@ -208,6 +258,7 @@ void Engine::shutdown()
         Logger::getInstance().info("Shutting down Engine...");
         
         // Clean up resources
+        m_chunks.clear();
         m_cube.reset();
         m_camera.reset();
         

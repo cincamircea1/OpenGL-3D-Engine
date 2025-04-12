@@ -1,27 +1,36 @@
 #version 330 core
+
+// Input vertex data
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
+layout (location = 3) in vec3 aColor;
 
-out vec3 Normal;
+// Output data to fragment shader
 out vec3 FragPos;
+out vec3 Normal;
 out vec2 TexCoord;
+out vec3 VertexColor;
 
+// Uniforms
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 void main()
 {
-    // Calculate the fragment position in world space
+    // Calculate fragment position in world space
     FragPos = vec3(model * vec4(aPos, 1.0));
     
-    // Calculate normals in world space
+    // Transform normal vectors
     Normal = mat3(transpose(inverse(model))) * aNormal;
     
     // Pass texture coordinates to fragment shader
     TexCoord = aTexCoord;
     
-    // Calculate clip-space position
+    // Pass vertex color to fragment shader
+    VertexColor = aColor;
+    
+    // Calculate final position
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 } 
